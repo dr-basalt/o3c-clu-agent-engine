@@ -1,0 +1,116 @@
+// ========================================
+// O3C-CLU-AGENT-ENGINE DATABASE SCHEMA
+// ========================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// USERS TABLE
+// ========================================
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  name         String?  @db.VarChar(255)
+  workspaceId  String   @unique @map("workspace_id") @db.VarChar(50)
+  apiKey       String   @unique @map("api_key") @db.VarChar(64)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamp()
+
+  // Relations
+  providerConfigs ProviderConfig[]
+  agents          Agent[]
+  executionRuns   ExecutionRun[]
+
+  @@index([email])
+  @@index([apiKey])
+  @@map("users")
+}
+
+// ========================================
+// PROVIDER CONFIGS TABLE
+// ========================================
+model ProviderConfig {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  providerName     String   @map("provider_name") @db.VarChar(50)
+  flavor           String   @db.VarChar(50)
+  baseUrl          String?  @map("base_url") @db.Text
+  apiKeyEncrypted  String?  @map("api_key_encrypted") @db.Text
+  headers          Json?    @db.JsonB
+  isDefault        Boolean  @default(false) @map("is_default")
+  defaultModel     String?  @map("default_model") @db.VarChar(100)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamp()
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, providerName])
+  @@map("provider_configs")
+}
+
+// ========================================
+// AGENTS TABLE
+// ========================================
+model Agent {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  name          String   @db.VarChar(255)
+  description   String?  @db.Text
+  systemPrompt  String   @map("system_prompt") @db.Text
+  mcpServers    Json     @default("[]") @map("mcp_servers") @db.JsonB
+  tools         Json     @default("[]") @db.JsonB
+  scheduleCron  String?  @map("schedule_cron") @db.VarChar(100)
+  isActive      Boolean  @default(true) @map("is_active")
+  allowShell    Boolean  @default(false) @map("allow_shell")
+  maxIterations Int      @default(10) @map("max_iterations")
+  metadata      Json     @default("{}") @db.JsonB
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamp()
+
+  // Relations
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  executionRuns ExecutionRun[]
+
+  @@index([userId])
+  @@index([scheduleCron])
+  @@map("agents")
+}
+
+// ========================================
+// EXECUTION RUNS TABLE
+// ========================================
+model ExecutionRun {
+  id            String    @id @default(uuid()) @db.Uuid
+  agentId       String    @map("agent_id") @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  status        String    @db.VarChar(50) // 'pending', 'running', 'completed', 'failed', 'waiting_input'
+  inputText     String?   @map("input_text") @db.Text
+  outputResult  Json?     @map("output_result") @db.JsonB
+  logs          String[]  @default([]) @db.Text
+  errorMessage  String?   @map("error_message") @db.Text
+  startedAt     DateTime? @map("started_at") @db.Timestamp()
+  completedAt   DateTime? @map("completed_at") @db.Timestamp()
+  durationMs    Int?      @map("duration_ms")
+  metadata      Json      @default("{}") @db.JsonB
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamp()
+
+  // Relations
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("execution_runs")
+}

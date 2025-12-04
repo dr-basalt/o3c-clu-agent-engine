@@ -1,0 +1,144 @@
+# ========================================
+# Production Docker Compose (Coolify)
+# ========================================
+
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: o3c-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-o3c_agent_engine}
+      POSTGRES_USER: ${POSTGRES_USER:-o3c_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?database password required}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - o3c-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-o3c_user} -d ${POSTGRES_DB:-o3c_agent_engine}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      - "coolify.managed=true"
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: o3c-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - o3c-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - "coolify.managed=true"
+
+  # API Backend
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: ${DOCKER_REGISTRY:-ghcr.io/yourorg}/o3c-agent-api:${VERSION:-latest}
+    container_name: o3c-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${POSTGRES_USER:-o3c_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-o3c_agent_engine}?schema=public
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_URL: redis://${REDIS_PASSWORD:+:$REDIS_PASSWORD@}redis:6379
+
+      # Application
+      NODE_ENV: production
+      PORT: 3000
+      API_PREFIX: /api/v1
+      API_BASE_URL: ${API_BASE_URL:-https://api.yourdomain.com}
+      FRONTEND_URL: ${FRONTEND_URL:-https://app.yourdomain.com}
+
+      # Security
+      JWT_SECRET: ${JWT_SECRET:?jwt secret required}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-15m}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?refresh secret required}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-7d}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?encryption key required}
+
+      # Rate Limiting
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+
+      # Worker
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-5}
+      MAX_JOB_DURATION_MS: ${MAX_JOB_DURATION_MS:-300000}
+      WORKSPACES_PATH: /data/workspaces
+
+      # Monitoring
+      ENABLE_METRICS: ${ENABLE_METRICS:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - workspaces_data:/data/workspaces
+    networks:
+      - o3c-network
+    ports:
+      - "${API_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      # Coolify labels
+      - "coolify.managed=true"
+      - "coolify.type=application"
+
+      # Traefik labels for routing
+      - "traefik.enable=true"
+      - "traefik.http.routers.o3c-api.rule=Host(`${API_DOMAIN:-api.yourdomain.com}`)"
+      - "traefik.http.routers.o3c-api.entrypoints=websecure"
+      - "traefik.http.routers.o3c-api.tls=true"
+      - "traefik.http.routers.o3c-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.o3c-api.loadbalancer.server.port=3000"
+
+      # CORS headers
+      - "traefik.http.middlewares.o3c-api-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS,PATCH"
+      - "traefik.http.middlewares.o3c-api-cors.headers.accesscontrolalloworiginlist=${FRONTEND_URL:-https://app.yourdomain.com}"
+      - "traefik.http.middlewares.o3c-api-cors.headers.accesscontrolallowcredentials=true"
+      - "traefik.http.middlewares.o3c-api-cors.headers.accesscontrolallowheaders=*"
+      - "traefik.http.routers.o3c-api.middlewares=o3c-api-cors@docker"
+
+networks:
+  o3c-network:
+    driver: bridge
+    name: o3c-network
+
+volumes:
+  postgres_data:
+    driver: local
+    name: o3c-postgres-data
+  redis_data:
+    driver: local
+    name: o3c-redis-data
+  workspaces_data:
+    driver: local
+    name: o3c-workspaces-data

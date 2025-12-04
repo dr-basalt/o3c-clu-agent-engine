@@ -1,0 +1,57 @@
+# ========================================
+# Development Docker Compose
+# ========================================
+
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: o3c-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: o3c_agent_engine
+      POSTGRES_USER: o3c_user
+      POSTGRES_PASSWORD: o3c_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - o3c-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U o3c_user -d o3c_agent_engine"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    container_name: o3c-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - o3c-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  o3c-network:
+    driver: bridge
+    name: o3c-network
+
+volumes:
+  postgres_data:
+    name: o3c-postgres-data-dev
+  redis_data:
+    name: o3c-redis-data-dev

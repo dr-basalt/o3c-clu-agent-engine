@@ -1,0 +1,37 @@
+{
+  "name": "o3c-clu-agent-engine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-tenant SaaS wrapper for RowboatX",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "db:migrate": "cd apps/api && pnpm prisma migrate deploy",
+    "db:generate": "cd apps/api && pnpm prisma generate",
+    "db:seed": "cd apps/api && pnpm prisma db seed",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "k8s:deploy": "./scripts/deploy-k8s.sh",
+    "coolify:deploy": "./scripts/coolify-deploy.sh"
+  },
+  "devDependencies": {
+    "@turbo/gen": "^1.11.2",
+    "turbo": "^1.11.2",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  },
+  "packageManager": "pnpm@8.14.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}
