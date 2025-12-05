@@ -10,12 +10,14 @@ WORKDIR /app
 RUN npm install -g pnpm@8.14.0
 
 # Copy package files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY package.json turbo.json ./
+COPY pnpm-workspace.yaml* ./
+COPY pnpm-lock.yaml* ./
 COPY packages ./packages
 COPY apps/api ./apps/api
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies (generate lockfile if not present)
+RUN pnpm install --no-frozen-lockfile
 
 # Generate Prisma client
 RUN cd apps/api && pnpm prisma generate
@@ -41,11 +43,14 @@ RUN npm install -g pnpm@8.14.0
 RUN npm install -g rowboatx
 
 # Copy package files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json ./
+COPY pnpm-workspace.yaml* ./
+COPY pnpm-lock.yaml* ./
 COPY packages ./packages
 COPY apps/api/package.json ./apps/api/
 
-# Install production dependencies only
+# Install production dependencies only (use lockfile from builder)
+COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
 RUN pnpm install --prod --frozen-lockfile
 
 # Copy built application
