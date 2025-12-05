@@ -40,7 +40,7 @@ WORKDIR /app
 RUN npm install -g pnpm@8.14.0
 
 # Install rowboatx
-RUN npm install -g rowboatx
+RUN npm install -g @rowboatlabs/rowboatx@latest
 
 # Copy package files
 COPY package.json ./
