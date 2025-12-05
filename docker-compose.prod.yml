@@ -8,7 +8,6 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: o3c-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-o3c_agent_engine}
@@ -31,7 +30,6 @@ services:
   # Redis Cache & Queue
   redis:
     image: redis:7-alpine
-    container_name: o3c-redis
     restart: unless-stopped
     command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
     volumes:
@@ -52,7 +50,6 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     image: ${DOCKER_REGISTRY:-ghcr.io/yourorg}/o3c-agent-api:${VERSION:-latest}
-    container_name: o3c-api
     restart: unless-stopped
     depends_on:
       postgres:
@@ -99,8 +96,7 @@ services:
       - workspaces_data:/data/workspaces
     networks:
       - o3c-network
-    ports:
-      - "${API_PORT:-3000}:3000"
+    # Note: No ports exposed - Traefik handles routing via labels
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/v1/health"]
       interval: 30s
@@ -130,15 +126,11 @@ services:
 networks:
   o3c-network:
     driver: bridge
-    name: o3c-network
 
 volumes:
   postgres_data:
     driver: local
-    name: o3c-postgres-data
   redis_data:
     driver: local
-    name: o3c-redis-data
   workspaces_data:
     driver: local
-    name: o3c-workspaces-data

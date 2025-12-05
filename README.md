@@ -229,6 +229,8 @@ docker-compose down
 
 ### Option 2: Docker Compose Production (Coolify)
 
+**📖 Voir le guide détaillé**: [COOLIFY.md](./COOLIFY.md)
+
 ```bash
 # Copy and configure environment
 cp .env.example .env
@@ -240,6 +242,11 @@ nano .env  # Fill in all required variables
 # Or manually:
 docker-compose -f docker-compose.prod.yml up -d
 ```
+
+**⚠️ Important pour Coolify**:
+- Pas besoin d'exposer les ports (Traefik gère le routing)
+- Configurez toutes les variables d'environnement dans l'interface Coolify
+- Le guide [COOLIFY.md](./COOLIFY.md) contient toutes les étapes détaillées
 
 ### Option 3: Kubernetes (TODO)
 
