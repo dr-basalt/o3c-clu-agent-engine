@@ -22,11 +22,7 @@ RUN pnpm install --no-frozen-lockfile
 # Generate Prisma client
 RUN cd apps/api && pnpm prisma generate
 
-# Build shared packages first
-RUN pnpm --filter @o3c/shared-types build
-RUN pnpm --filter @o3c/shared-config build
-
-# Build API
+# Build API (NestJS will compile all TypeScript including shared packages)
 RUN pnpm --filter @o3c/api build
 
 # ========================================
@@ -53,12 +49,13 @@ COPY apps/api/package.json ./apps/api/
 COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
 RUN pnpm install --prod --frozen-lockfile
 
-# Copy built application
-COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
-COPY --from=builder /app/packages/shared-config/dist ./packages/shared-config/dist
+# Copy built application (NestJS bundles everything in dist)
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Copy package source for runtime (shared packages might be needed)
+COPY --from=builder /app/packages ./packages
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
