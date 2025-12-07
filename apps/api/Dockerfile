@@ -10,7 +10,7 @@ WORKDIR /app
 RUN npm install -g pnpm@8.14.0
 
 # Copy package files
-COPY package.json turbo.json ./
+COPY package.json tsconfig.json turbo.json ./
 COPY pnpm-workspace.yaml* ./
 COPY pnpm-lock.yaml* ./
 COPY packages ./packages
