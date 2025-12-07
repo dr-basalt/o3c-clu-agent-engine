@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { randomUUID } from 'crypto';
 import { AgentsService } from '../agents/agents.service';
 import type { AgentJobData } from '@o3c/shared-types';
 
@@ -53,6 +54,7 @@ export class SchedulerService implements OnModuleInit {
       {
         agentId,
         userId,
+        runId: randomUUID(),
       },
       {
         jobId,
@@ -94,11 +96,13 @@ export class SchedulerService implements OnModuleInit {
    * Execute agent immediately (add to queue)
    */
   async executeAgentNow(agentId: string, userId: string, input?: string): Promise<string> {
+    const runId = randomUUID();
     const job = await this.agentQueue.add(
       'execute-agent',
       {
         agentId,
         userId,
+        runId,
         input,
       },
       {

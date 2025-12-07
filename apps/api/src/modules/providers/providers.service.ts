@@ -48,14 +48,15 @@ export class ProvidersService {
 
     this.logger.log(`Provider config created: ${config.providerName} for user ${userId}`);
 
-    return config;
+    return config as ProviderConfig;
   }
 
   async findAll(userId: string): Promise<ProviderConfig[]> {
-    return this.prisma.providerConfig.findMany({
+    const configs = await this.prisma.providerConfig.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
+    return configs as ProviderConfig[];
   }
 
   async findOne(userId: string, id: string): Promise<ProviderConfig> {
@@ -67,7 +68,7 @@ export class ProvidersService {
       throw new NotFoundException('Provider config not found');
     }
 
-    return config;
+    return config as ProviderConfig;
   }
 
   async update(
@@ -100,7 +101,7 @@ export class ProvidersService {
 
     this.logger.log(`Provider config updated: ${config.providerName} for user ${userId}`);
 
-    return config;
+    return config as ProviderConfig;
   }
 
   async remove(userId: string, id: string): Promise<void> {
@@ -146,7 +147,7 @@ export class ProvidersService {
     } catch (error) {
       return {
         success: false,
-        message: error.message || 'Connection failed',
+        message: error instanceof Error ? error.message : 'Connection failed',
       };
     }
   }

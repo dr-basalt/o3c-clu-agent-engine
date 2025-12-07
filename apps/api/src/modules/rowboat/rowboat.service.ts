@@ -163,7 +163,7 @@ export class RowboatService {
     this.logger.log(`Starting RowboatX for run ${runId} with args:`, args);
 
     try {
-      const process = spawn('rowboatx', args, {
+      const childProcess = spawn('rowboatx', args, {
         cwd: workspacePath,
         env: {
           ...process.env,
@@ -172,23 +172,23 @@ export class RowboatService {
         },
       });
 
-      this.runningProcesses.set(runId, process);
+      this.runningProcesses.set(runId, childProcess);
 
       const logs: string[] = [];
 
-      process.stdout.on('data', (data) => {
+      childProcess.stdout.on('data', (data) => {
         const log = data.toString();
         logs.push(log);
         this.logger.debug(`[${runId}] stdout: ${log}`);
       });
 
-      process.stderr.on('data', (data) => {
+      childProcess.stderr.on('data', (data) => {
         const log = data.toString();
         logs.push(log);
         this.logger.debug(`[${runId}] stderr: ${log}`);
       });
 
-      process.on('close', async (code) => {
+      childProcess.on('close', async (code) => {
         this.runningProcesses.delete(runId);
 
         // Save logs
@@ -272,9 +272,10 @@ export class RowboatService {
    * List user agents (from RowboatX perspective)
    */
   async listUserAgents(userId: string): Promise<Agent[]> {
-    return this.prisma.agent.findMany({
+    const agents = await this.prisma.agent.findMany({
       where: { userId, isActive: true },
-    }) as Promise<Agent[]>;
+    });
+    return agents as Agent[];
   }
 
   /**

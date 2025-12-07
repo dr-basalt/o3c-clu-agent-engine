@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { RowboatService } from '../rowboat/rowboat.service';
 import { ExecutionsService } from '../executions/executions.service';
 import type {
@@ -9,8 +9,6 @@ import type {
 
 @Injectable()
 export class OpenaiProxyService {
-  private readonly logger = new Logger(OpenaiProxyService.name);
-
   constructor(
     private rowboatService: RowboatService,
     private executionsService: ExecutionsService

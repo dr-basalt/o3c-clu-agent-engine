@@ -29,6 +29,7 @@
     "@nestjs/swagger": "^7.1.17",
     "@nestjs/throttler": "^5.1.1",
     "@nestjs/bull": "^10.0.1",
+    "@nestjs/schedule": "^4.0.0",
     "@prisma/client": "^5.8.0",
     "@o3c/shared-types": "workspace:*",
     "@o3c/shared-config": "workspace:*",
