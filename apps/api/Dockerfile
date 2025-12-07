@@ -19,6 +19,10 @@ COPY apps/api ./apps/api
 # Install dependencies (generate lockfile if not present)
 RUN pnpm install --no-frozen-lockfile
 
+# Build shared packages first (they are dependencies of the API)
+RUN pnpm --filter @o3c/shared-types build
+RUN pnpm --filter @o3c/shared-config build
+
 # Generate Prisma client
 RUN cd apps/api && pnpm prisma generate
 
@@ -58,8 +62,12 @@ RUN cd apps/api && npx prisma generate
 # Copy built application (NestJS bundles everything in dist)
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
 
-# Copy package source for runtime (shared packages might be needed)
-COPY --from=builder /app/packages ./packages
+# Copy compiled shared packages (with their dist folders)
+# These are needed at runtime by the NestJS application
+COPY --from=builder /app/packages/shared-types/package.json ./packages/shared-types/
+COPY --from=builder /app/packages/shared-types/dist ./packages/shared-types/dist
+COPY --from=builder /app/packages/shared-config/package.json ./packages/shared-config/
+COPY --from=builder /app/packages/shared-config/dist ./packages/shared-config/dist
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
