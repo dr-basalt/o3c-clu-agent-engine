@@ -6,6 +6,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install required dependencies for Prisma (OpenSSL)
+RUN apk add --no-cache openssl1.1-compat
+
 # Install pnpm
 RUN npm install -g pnpm@8.14.0
 
@@ -35,6 +38,9 @@ RUN pnpm --filter @o3c/api build
 FROM node:20-alpine
 
 WORKDIR /app
+
+# Install required dependencies for Prisma (OpenSSL)
+RUN apk add --no-cache openssl1.1-compat
 
 # Install pnpm
 RUN npm install -g pnpm@8.14.0
