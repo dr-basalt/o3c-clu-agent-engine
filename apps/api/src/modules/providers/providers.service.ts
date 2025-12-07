@@ -48,7 +48,7 @@ export class ProvidersService {
 
     this.logger.log(`Provider config created: ${config.providerName} for user ${userId}`);
 
-    return config as ProviderConfig;
+    return config as unknown as ProviderConfig;
   }
 
   async findAll(userId: string): Promise<ProviderConfig[]> {
@@ -56,7 +56,7 @@ export class ProvidersService {
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
-    return configs as ProviderConfig[];
+    return configs as unknown as ProviderConfig[];
   }
 
   async findOne(userId: string, id: string): Promise<ProviderConfig> {
@@ -68,7 +68,7 @@ export class ProvidersService {
       throw new NotFoundException('Provider config not found');
     }
 
-    return config as ProviderConfig;
+    return config as unknown as ProviderConfig;
   }
 
   async update(
@@ -101,7 +101,7 @@ export class ProvidersService {
 
     this.logger.log(`Provider config updated: ${config.providerName} for user ${userId}`);
 
-    return config as ProviderConfig;
+    return config as unknown as ProviderConfig;
   }
 
   async remove(userId: string, id: string): Promise<void> {

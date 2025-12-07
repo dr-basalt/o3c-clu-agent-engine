@@ -27,7 +27,7 @@ export class AgentsService {
 
     this.logger.log(`Agent created: ${agent.name} (${agent.id}) for user ${userId}`);
 
-    return agent as Agent;
+    return agent as unknown as Agent;
   }
 
   async findAll(
@@ -50,7 +50,7 @@ export class AgentsService {
     ]);
 
     return {
-      items: agents as Agent[],
+      items: agents as unknown as Agent[],
       total,
       page,
       pageSize,
@@ -67,7 +67,7 @@ export class AgentsService {
       throw new NotFoundException('Agent not found');
     }
 
-    return agent as Agent;
+    return agent as unknown as Agent;
   }
 
   async update(userId: string, id: string, dto: Partial<CreateAgentDto>): Promise<Agent> {
@@ -81,7 +81,7 @@ export class AgentsService {
 
     this.logger.log(`Agent updated: ${agent.name} (${agent.id}) for user ${userId}`);
 
-    return agent as Agent;
+    return agent as unknown as Agent;
   }
 
   async remove(userId: string, id: string): Promise<void> {
@@ -124,7 +124,7 @@ export class AgentsService {
       },
     });
 
-    return agents as Agent[];
+    return agents as unknown as Agent[];
   }
 
   private isValidCronExpression(expression: string): boolean {

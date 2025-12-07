@@ -275,7 +275,7 @@ export class RowboatService {
     const agents = await this.prisma.agent.findMany({
       where: { userId, isActive: true },
     });
-    return agents as Agent[];
+    return agents as unknown as Agent[];
   }
 
   /**
