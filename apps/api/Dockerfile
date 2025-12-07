@@ -45,14 +45,18 @@ COPY pnpm-lock.yaml* ./
 COPY packages ./packages
 COPY apps/api/package.json ./apps/api/
 
+# Copy Prisma schema (needed for generating client)
+COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
+
 # Install production dependencies only (use lockfile from builder)
 COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
 RUN pnpm install --prod --frozen-lockfile
 
+# Generate Prisma client in production
+RUN cd apps/api && npx prisma generate
+
 # Copy built application (NestJS bundles everything in dist)
 COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/apps/api/prisma ./apps/api/prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # Copy package source for runtime (shared packages might be needed)
 COPY --from=builder /app/packages ./packages
