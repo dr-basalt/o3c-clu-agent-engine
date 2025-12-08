@@ -39,8 +39,8 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Install required dependencies for Prisma and health checks
-RUN apt-get update && apt-get install -y openssl ca-certificates wget && rm -rf /var/lib/apt/lists/*
+# Install required dependencies for Prisma, health checks, and migration scripts
+RUN apt-get update && apt-get install -y openssl ca-certificates wget postgresql-client && rm -rf /var/lib/apt/lists/*
 
 # Install pnpm
 RUN npm install -g pnpm@8.14.0

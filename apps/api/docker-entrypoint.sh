@@ -16,42 +16,41 @@ echo "Running database migrations..."
 ORIGINAL_DIR=$(pwd)
 cd /app/apps/api
 
-if ! npx prisma migrate deploy 2>&1 | tee /tmp/migrate.log; then
-    # Check if this is a P3009 error (failed migration found)
-    if grep -q "P3009" /tmp/migrate.log; then
-        echo "Found failed migration (P3009). Attempting to resolve..."
+# Run migration and capture output
+npx prisma migrate deploy 2>&1 | tee /tmp/migrate.log
+MIGRATE_EXIT_CODE=$?
 
-        # Extract the failed migration name from the error message
-        FAILED_MIGRATION=$(grep "migration started at" /tmp/migrate.log | sed -n 's/.*The `\([^`]*\)` migration.*/\1/p')
+# Check if P3009 error occurred (regardless of exit code)
+if grep -q "P3009" /tmp/migrate.log; then
+    echo "Found failed migration (P3009). Attempting to resolve..."
 
-        if [ -n "$FAILED_MIGRATION" ]; then
-            echo "Failed migration: $FAILED_MIGRATION"
+    # Extract the failed migration name from the error message
+    FAILED_MIGRATION=$(grep "migration started at" /tmp/migrate.log | sed -n 's/.*The `\([^`]*\)` migration.*/\1/p')
 
-            # Check if the tables were actually created by querying the database
-            # We'll check for the 'users' table which should exist if migration succeeded
-            TABLE_EXISTS=$(npx prisma db execute --stdin <<EOF
-SELECT EXISTS (
-  SELECT FROM information_schema.tables
-  WHERE table_schema = 'public'
-  AND table_name = 'users'
-);
-EOF
-)
+    if [ -n "$FAILED_MIGRATION" ]; then
+        echo "Failed migration: $FAILED_MIGRATION"
 
-            if echo "$TABLE_EXISTS" | grep -q "true\|t"; then
-                echo "Tables exist - marking migration as applied..."
-                npx prisma migrate resolve --applied "$FAILED_MIGRATION"
-            else
-                echo "Tables don't exist - marking migration as rolled back and will retry..."
-                npx prisma migrate resolve --rolled-back "$FAILED_MIGRATION"
-                npx prisma migrate deploy
-            fi
+        # Check if the 'users' table exists in the database
+        # If it exists, the migration actually succeeded but wasn't marked as such
+        echo "Checking if database tables exist..."
+
+        # Use psql to check if table exists (more reliable than prisma db execute)
+        if PGPASSWORD="$POSTGRES_PASSWORD" psql -h postgres -U "$POSTGRES_USER" -d "$POSTGRES_DB" -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'users');" | grep -q "t"; then
+            echo "✓ Tables exist - marking migration as applied..."
+            npx prisma migrate resolve --applied "$FAILED_MIGRATION"
+            echo "✓ Migration marked as applied successfully"
+        else
+            echo "✗ Tables don't exist - marking migration as rolled back and retrying..."
+            npx prisma migrate resolve --rolled-back "$FAILED_MIGRATION"
+            echo "Retrying migration..."
+            npx prisma migrate deploy
         fi
-    else
-        # Different error, re-throw it
-        cat /tmp/migrate.log
-        exit 1
     fi
+elif [ $MIGRATE_EXIT_CODE -ne 0 ]; then
+    # Migration failed for a different reason
+    echo "Migration failed with exit code $MIGRATE_EXIT_CODE"
+    cat /tmp/migrate.log
+    exit 1
 fi
 
 echo "Migrations completed successfully"
