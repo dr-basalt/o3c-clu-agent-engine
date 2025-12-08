@@ -58,13 +58,13 @@ services:
         condition: service_healthy
     environment:
       # Database
-      DATABASE_URL: postgresql://${POSTGRES_USER:-o3c_user}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-o3c_agent_engine}?schema=public
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public"
 
       # Redis
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-      REDIS_URL: redis://${REDIS_PASSWORD:+:$REDIS_PASSWORD@}redis:6379
+      REDIS_URL: "redis://${REDIS_PASSWORD:+:$REDIS_PASSWORD@}redis:6379"
 
       # Application
       NODE_ENV: production
