@@ -11,6 +11,9 @@ fi
 
 # Run database migrations with error handling for failed migrations (P3009)
 echo "Running database migrations..."
+
+# Save current directory and change to API directory for migrations
+ORIGINAL_DIR=$(pwd)
 cd /app/apps/api
 
 if ! npx prisma migrate deploy 2>&1 | tee /tmp/migrate.log; then
@@ -52,6 +55,9 @@ EOF
 fi
 
 echo "Migrations completed successfully"
+
+# Return to original directory before executing the main command
+cd "$ORIGINAL_DIR"
 
 # Execute the main command
 exec "$@"
