@@ -9,5 +9,9 @@ if [ -n "$POSTGRES_PASSWORD" ]; then
     export DATABASE_URL="postgresql://${POSTGRES_USER}:${ENCODED_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public"
 fi
 
+# Run database migrations
+echo "Running database migrations..."
+cd /app/apps/api && npx prisma migrate deploy
+
 # Execute the main command
 exec "$@"
