@@ -72,8 +72,10 @@ services:
       NODE_ENV: production
       PORT: 3000
       API_PREFIX: /api/v1
-      API_BASE_URL: ${API_BASE_URL:-https://api.yourdomain.com}
-      FRONTEND_URL: ${FRONTEND_URL:-https://app.yourdomain.com}
+      # API_BASE_URL: Uses Coolify's auto-generated SERVICE_URL_API if available, otherwise falls back to user-provided value
+      API_BASE_URL: ${SERVICE_URL_API:-${API_BASE_URL:-https://api.yourdomain.com}}
+      # FRONTEND_URL: Must be provided by user (set in Coolify environment variables)
+      FRONTEND_URL: ${FRONTEND_URL:?frontend URL required - set in Coolify environment variables}
 
       # Security
       JWT_SECRET: ${JWT_SECRET:?jwt secret required}
@@ -111,8 +113,10 @@ services:
       - "coolify.type=application"
 
       # Traefik labels for routing
+      # Note: Coolify automatically configures Traefik routing via SERVICE_FQDN_API
+      # These labels are kept for compatibility but Coolify's labels take precedence
       - "traefik.enable=true"
-      - "traefik.http.routers.o3c-api.rule=Host(`${API_DOMAIN:-api.yourdomain.com}`)"
+      - "traefik.http.routers.o3c-api.rule=Host(`${SERVICE_FQDN_API:-${API_DOMAIN:-api.yourdomain.com}}`)"
       - "traefik.http.routers.o3c-api.entrypoints=websecure"
       - "traefik.http.routers.o3c-api.tls=true"
       - "traefik.http.routers.o3c-api.tls.certresolver=letsencrypt"
@@ -120,7 +124,7 @@ services:
 
       # CORS headers
       - "traefik.http.middlewares.o3c-api-cors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS,PATCH"
-      - "traefik.http.middlewares.o3c-api-cors.headers.accesscontrolalloworiginlist=${FRONTEND_URL:-https://app.yourdomain.com}"
+      - "traefik.http.middlewares.o3c-api-cors.headers.accesscontrolalloworiginlist=${FRONTEND_URL}"
       - "traefik.http.middlewares.o3c-api-cors.headers.accesscontrolallowcredentials=true"
       - "traefik.http.middlewares.o3c-api-cors.headers.accesscontrolallowheaders=*"
       - "traefik.http.routers.o3c-api.middlewares=o3c-api-cors@docker"

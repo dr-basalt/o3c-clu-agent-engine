@@ -85,9 +85,6 @@ CREATE INDEX "users_email_idx" ON "users"("email");
 CREATE INDEX "users_api_key_idx" ON "users"("api_key");
 
 -- CreateIndex
-CREATE INDEX "provider_configs_user_id_provider_name_key" ON "provider_configs"("user_id", "provider_name");
-
--- CreateIndex
 CREATE UNIQUE INDEX "provider_configs_user_id_provider_name_key" ON "provider_configs"("user_id", "provider_name");
 
 -- CreateIndex
