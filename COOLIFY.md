@@ -48,6 +48,9 @@ ENCRYPTION_KEY=<générer-secret-32-caractères>
 #### Variables Optionnelles
 
 ```bash
+# Auto-seed (Premier déploiement uniquement - créé utilisateur demo)
+AUTO_SEED=true
+
 # Performance
 WORKER_CONCURRENCY=5
 MAX_JOB_DURATION_MS=300000
@@ -62,6 +65,8 @@ RATE_LIMIT_MAX_REQUESTS=100
 ENABLE_METRICS=true
 LOG_LEVEL=info
 ```
+
+**⚠️ Important**: Mettez `AUTO_SEED=true` pour le premier déploiement uniquement. Désactivez-le après que la base soit seedée.
 
 ---
 
@@ -129,19 +134,44 @@ https://api.votredomaine.com/api/docs
 
 ## 🔧 Étape 6: Initialiser la base de données
 
-### Option 1: Via Coolify Terminal
+### ✅ Méthode Recommandée: Auto-Seed (Automatique)
+
+Si vous avez configuré `AUTO_SEED=true` dans les variables d'environnement:
+
+1. **Les migrations sont automatiquement exécutées** au démarrage du container
+2. **Le seed est automatiquement exécuté** si la base est vide
+3. **Les credentials sont affichés dans les logs**
+
+Vérifiez les logs du container API pour voir les credentials:
+```bash
+# Dans Coolify → Containers → api → Logs
+# Cherchez:
+🎉 Database seeding completed!
+
+📝 Test credentials:
+   Email: demo@o3c.dev
+   Password: password123
+   API Key: abc123def456...
+```
+
+**⚠️ Sauvegardez l'API Key affichée!**
+
+### Option Manuelle: Via Terminal
+
+Si AUTO_SEED n'est pas activé ou si vous voulez reseed:
+
+#### Via Coolify Terminal
 
 1. Dans Coolify, allez dans **Containers** → Service `api`
 2. Cliquez sur **Terminal**
 3. Exécutez:
 
 ```bash
-cd apps/api
-pnpm prisma migrate deploy
-pnpm prisma db seed
+cd /app/apps/api
+npx prisma db seed
 ```
 
-### Option 2: Via SSH
+#### Via SSH
 
 ```bash
 # Se connecter au serveur
@@ -150,8 +180,8 @@ ssh user@votre-serveur.com
 # Trouver le container API
 docker ps | grep o3c-agent-api
 
-# Exécuter les migrations
-docker exec -it <container-id> sh -c "cd apps/api && pnpm prisma migrate deploy && pnpm prisma db seed"
+# Exécuter le seed
+docker exec -it <container-id> sh -c "cd /app/apps/api && npx prisma db seed"
 ```
 
 ---
@@ -181,6 +211,17 @@ curl https://api.votredomaine.com/api/v1/health/metrics
 ---
 
 ## 🐛 Troubleshooting
+
+**📖 Guide Complet de Dépannage**: [COOLIFY-TROUBLESHOOTING.md](./COOLIFY-TROUBLESHOOTING.md)
+
+Ce guide contient des solutions détaillées pour:
+- Erreurs de permissions (EACCES)
+- Variables d'environnement manquantes
+- Problèmes de seed de base de données
+- Migrations échouées (P3009)
+- Et plus encore...
+
+### Problèmes Courants
 
 ### Problème: Build échoue
 

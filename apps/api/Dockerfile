@@ -87,6 +87,10 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 RUN groupadd -g 1001 nodejs && useradd -r -u 1001 -g nodejs nodejs
 RUN mkdir -p /data/workspaces && chown -R nodejs:nodejs /data
 
+# Fix permissions for the application directory
+# This allows the nodejs user to write to node_modules (needed for prisma generate, seed, etc.)
+RUN chown -R nodejs:nodejs /app
+
 USER nodejs
 
 EXPOSE 3000
