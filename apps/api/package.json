@@ -2,6 +2,9 @@
   "name": "@o3c/api",
   "version": "1.0.0",
   "private": true,
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",
