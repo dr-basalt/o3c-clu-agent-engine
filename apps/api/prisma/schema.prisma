@@ -26,9 +26,11 @@ model User {
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamp()
 
   // Relations
-  providerConfigs ProviderConfig[]
-  agents          Agent[]
-  executionRuns   ExecutionRun[]
+  providerConfigs     ProviderConfig[]
+  agents              Agent[]
+  executionRuns       ExecutionRun[]
+  workflows           Workflow[]
+  workflowExecutions  WorkflowExecution[]
 
   @@index([email])
   @@index([apiKey])
@@ -80,6 +82,7 @@ model Agent {
   // Relations
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   executionRuns ExecutionRun[]
+  workflowSteps WorkflowStep[]
 
   @@index([userId])
   @@index([scheduleCron])
@@ -113,4 +116,76 @@ model ExecutionRun {
   @@index([status])
   @@index([createdAt(sort: Desc)])
   @@map("execution_runs")
+}
+
+// ========================================
+// WORKFLOWS TABLE
+// ========================================
+model Workflow {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  name          String   @db.VarChar(255)
+  description   String?  @db.Text
+  isActive      Boolean  @default(true) @map("is_active")
+  metadata      Json     @default("{}") @db.JsonB
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamp()
+
+  // Relations
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  steps           WorkflowStep[]
+  executions      WorkflowExecution[]
+
+  @@index([userId])
+  @@map("workflows")
+}
+
+// ========================================
+// WORKFLOW STEPS TABLE
+// ========================================
+model WorkflowStep {
+  id          String   @id @default(uuid()) @db.Uuid
+  workflowId  String   @map("workflow_id") @db.Uuid
+  agentId     String   @map("agent_id") @db.Uuid
+  order       Int      @default(0)
+  inputMapping Json    @default("{}") @map("input_mapping") @db.JsonB
+  metadata    Json     @default("{}") @db.JsonB
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp()
+
+  // Relations
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  agent    Agent    @relation(fields: [agentId], references: [id], onDelete: Restrict)
+
+  @@unique([workflowId, order])
+  @@index([workflowId])
+  @@map("workflow_steps")
+}
+
+// ========================================
+// WORKFLOW EXECUTIONS TABLE
+// ========================================
+model WorkflowExecution {
+  id           String    @id @default(uuid()) @db.Uuid
+  workflowId   String    @map("workflow_id") @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  status       String    @db.VarChar(50) // 'pending', 'running', 'completed', 'failed', 'cancelled'
+  currentStep  Int       @default(0) @map("current_step")
+  inputData    Json?     @map("input_data") @db.JsonB
+  outputData   Json?     @map("output_data") @db.JsonB
+  errorMessage String?   @map("error_message") @db.Text
+  startedAt    DateTime? @map("started_at") @db.Timestamp()
+  completedAt  DateTime? @map("completed_at") @db.Timestamp()
+  durationMs   Int?      @map("duration_ms")
+  metadata     Json      @default("{}") @db.JsonB
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp()
+
+  // Relations
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("workflow_executions")
 }

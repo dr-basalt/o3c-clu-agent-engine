@@ -205,6 +205,83 @@ export interface WorkspaceConfig {
 }
 
 // ========================================
+// WORKFLOW TYPES
+// ========================================
+export interface WorkflowStep {
+  id: string;
+  workflowId: string;
+  agentId: string;
+  agent?: Agent;
+  order: number;
+  inputMapping: Record<string, any>;
+  metadata: Record<string, any>;
+  createdAt: Date;
+}
+
+export interface Workflow {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  metadata: Record<string, any>;
+  createdAt: Date;
+  updatedAt: Date;
+  steps: WorkflowStep[];
+}
+
+export type WorkflowExecutionStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+
+export interface WorkflowExecution {
+  id: string;
+  workflowId: string;
+  userId: string;
+  status: WorkflowExecutionStatus;
+  currentStep: number;
+  inputData?: Record<string, any>;
+  outputData?: Record<string, any>;
+  errorMessage?: string;
+  startedAt?: Date;
+  completedAt?: Date;
+  durationMs?: number;
+  metadata: Record<string, any>;
+  createdAt: Date;
+  workflow?: Workflow;
+}
+
+export const CreateWorkflowStepSchema = z.object({
+  agentId: z.string().uuid(),
+  order: z.number().int().nonnegative().optional(),
+  inputMapping: z.record(z.any()).default({}),
+  metadata: z.record(z.any()).default({}),
+});
+
+export const CreateWorkflowSchema = z.object({
+  name: z.string().min(1).max(255),
+  description: z.string().optional(),
+  isActive: z.boolean().default(true),
+  metadata: z.record(z.any()).default({}),
+  steps: z.array(CreateWorkflowStepSchema).default([]),
+});
+
+export const UpdateWorkflowSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  description: z.string().optional(),
+  isActive: z.boolean().optional(),
+  metadata: z.record(z.any()).optional(),
+  steps: z.array(CreateWorkflowStepSchema).optional(),
+});
+
+export const ExecuteWorkflowSchema = z.object({
+  inputData: z.record(z.any()).optional(),
+  metadata: z.record(z.any()).optional(),
+});
+
+export type CreateWorkflowDto = z.infer<typeof CreateWorkflowSchema>;
+export type UpdateWorkflowDto = z.infer<typeof UpdateWorkflowSchema>;
+export type ExecuteWorkflowDto = z.infer<typeof ExecuteWorkflowSchema>;
+
+// ========================================
 // JOB TYPES (BullMQ)
 // ========================================
 export interface AgentJobData {

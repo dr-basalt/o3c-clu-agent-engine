@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: o3c-agent-engine
+  labels:
+    name: o3c-agent-engine
+    app: rowboatx-service

@@ -1,0 +1,44 @@
+---
+# PVC for PostgreSQL data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: o3c-agent-engine
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard  # Change based on your cloud provider
+
+---
+# PVC for Redis data
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: o3c-agent-engine
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
+
+---
+# PVC for User Workspaces
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: workspaces-pvc
+  namespace: o3c-agent-engine
+spec:
+  accessModes:
+    - ReadWriteMany  # Multiple pods can access user workspaces
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard  # Consider using a distributed storage class

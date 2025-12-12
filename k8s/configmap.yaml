@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: o3c-config
+  namespace: o3c-agent-engine
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  LOG_LEVEL: "info"
+  WORKSPACES_PATH: "/data/workspaces"
+  REDIS_HOST: "redis-service"
+  REDIS_PORT: "6379"
+  POSTGRES_HOST: "postgres-service"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "o3c_agent_engine"
+  POSTGRES_USER: "o3c_user"
+  RATE_LIMIT_WINDOW_MS: "900000"
+  RATE_LIMIT_MAX_REQUESTS: "100"
+  JWT_EXPIRATION: "15m"
+  JWT_REFRESH_EXPIRATION: "7d"

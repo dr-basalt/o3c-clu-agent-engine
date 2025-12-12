@@ -11,6 +11,9 @@ import { AgentsModule } from './modules/agents/agents.module';
 import { ExecutionsModule } from './modules/executions/executions.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { RowboatModule } from './modules/rowboat/rowboat.module';
+import { WorkflowsModule } from './modules/workflows/workflows.module';
+import { DiscoveryModule } from './modules/discovery/discovery.module';
+import { TtyStreamModule } from './modules/tty-stream/tty-stream.module';
 import { OpenaiProxyModule } from './modules/openai-proxy/openai-proxy.module';
 import { HealthModule } from './modules/health/health.module';
 
@@ -56,6 +59,9 @@ import { HealthModule } from './modules/health/health.module';
     AuthModule,
     ProvidersModule,
     AgentsModule,
+    WorkflowsModule,
+    DiscoveryModule,
+    TtyStreamModule,
     ExecutionsModule,
     SchedulerModule,
     RowboatModule,

@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: o3c-api
+  namespace: o3c-agent-engine
+  labels:
+    app: o3c-api
+spec:
+  replicas: 3  # Horizontal scaling
+  selector:
+    matchLabels:
+      app: o3c-api
+  template:
+    metadata:
+      labels:
+        app: o3c-api
+    spec:
+      initContainers:
+        # Wait for database to be ready
+        - name: wait-for-db
+          image: postgres:15-alpine
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h postgres-service -U o3c_user; do
+                echo "Waiting for database..."
+                sleep 2
+              done
+        # Run migrations
+        - name: migrations
+          image: your-registry/o3c-api:latest  # Replace with your image
+          command:
+            - sh
+            - -c
+            - |
+              cd /app/apps/api
+              npx prisma migrate deploy
+              npx prisma generate
+          envFrom:
+            - configMapRef:
+                name: o3c-config
+            - secretRef:
+                name: o3c-secrets
+      containers:
+        - name: api
+          image: your-registry/o3c-api:latest  # Replace with your image
+          ports:
+            - containerPort: 3000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: o3c-config
+            - secretRef:
+                name: o3c-secrets
+          volumeMounts:
+            - name: workspaces
+              mountPath: /data/workspaces
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health/ready
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        - name: workspaces
+          persistentVolumeClaim:
+            claimName: workspaces-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: o3c-api-service
+  namespace: o3c-agent-engine
+  labels:
+    app: o3c-api
+spec:
+  selector:
+    app: o3c-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+      name: http
+  type: ClusterIP
