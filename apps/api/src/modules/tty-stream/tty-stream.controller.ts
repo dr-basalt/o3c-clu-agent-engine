@@ -8,7 +8,7 @@ import {
   MessageEvent,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiBody } from '@nestjs/swagger';
-import { Observable, interval, map } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { TtyStreamService, StreamMessage } from './tty-stream.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { ApiResponse } from '@o3c/shared-types';

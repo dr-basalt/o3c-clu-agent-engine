@@ -1,10 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Subject, Observable } from 'rxjs';
 import { NlpParserService, ParsedCommand } from './nlp-parser.service';
 import { AgentsService } from '../agents/agents.service';
 import { WorkflowsService } from '../workflows/workflows.service';
 import { RowboatService } from '../rowboat/rowboat.service';
-import { DiscoveryService } from '../discovery/discovery.service';
 
 export interface StreamMessage {
   type: 'output' | 'error' | 'command' | 'suggestion' | 'status';
@@ -14,15 +13,13 @@ export interface StreamMessage {
 
 @Injectable()
 export class TtyStreamService {
-  private readonly logger = new Logger(TtyStreamService.name);
   private readonly streams = new Map<string, Subject<StreamMessage>>();
 
   constructor(
     private nlpParser: NlpParserService,
     private agentsService: AgentsService,
     private workflowsService: WorkflowsService,
-    private rowboatService: RowboatService,
-    private discoveryService: DiscoveryService
+    private rowboatService: RowboatService
   ) {}
 
   /**
@@ -68,9 +65,10 @@ export class TtyStreamService {
       // Execute based on intent
       await this.executeIntent(userId, sessionId, parsed);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
       stream.next({
         type: 'error',
-        data: { message: error.message },
+        data: { message: errorMessage },
         timestamp: new Date(),
       });
     }
@@ -144,7 +142,7 @@ export class TtyStreamService {
       type: 'output',
       data: {
         message: `Found ${result.total} agents`,
-        agents: result.agents.map((a) => ({
+        agents: result.items.map((a) => ({
           id: a.id,
           name: a.name,
           description: a.description,
@@ -209,7 +207,7 @@ export class TtyStreamService {
 
     // Find agent by name
     const result = await this.agentsService.findAll(userId, 1, 100);
-    const agent = result.agents.find(
+    const agent = result.items.find(
       (a) => a.name.toLowerCase() === agentName.toLowerCase()
     );
 
@@ -262,7 +260,7 @@ export class TtyStreamService {
 
     // Find agent by name
     const result = await this.agentsService.findAll(userId, 1, 100);
-    const agent = result.agents.find(
+    const agent = result.items.find(
       (a) => a.name.toLowerCase() === agentName.toLowerCase()
     );
 
@@ -360,7 +358,7 @@ export class TtyStreamService {
    * Handle explore tools command
    */
   private async handleExploreTools(
-    userId: string,
+    _userId: string,
     stream: Subject<StreamMessage>,
     entities: Record<string, any>
   ): Promise<void> {
@@ -400,7 +398,7 @@ export class TtyStreamService {
 
     // Find agent and check last run
     const result = await this.agentsService.findAll(userId, 1, 100);
-    const agent = result.agents.find(
+    const agent = result.items.find(
       (a) => a.name.toLowerCase() === agentName.toLowerCase()
     );
 

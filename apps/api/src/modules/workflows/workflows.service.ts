@@ -307,11 +307,12 @@ export class WorkflowsService {
       this.logger.log(`Workflow ${workflow.id} completed in ${duration}ms`);
     } catch (error) {
       const duration = Date.now() - startTime;
+      const errorMessage = error instanceof Error ? error.message : String(error);
       await this.prisma.workflowExecution.update({
         where: { id: executionId },
         data: {
           status: 'failed',
-          errorMessage: error.message,
+          errorMessage,
           completedAt: new Date(),
           durationMs: duration,
         },

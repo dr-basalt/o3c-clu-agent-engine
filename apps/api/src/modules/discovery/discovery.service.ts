@@ -68,7 +68,7 @@ export class DiscoveryService {
         select: { id: true, name: true },
       });
 
-      const dbAgentMap = new Map(dbAgents.map((a) => [a.name, a.id]));
+      const dbAgentMap = new Map<string, string>(dbAgents.map((a) => [a.name, a.id]));
 
       for (const entry of entries) {
         if (entry.isDirectory()) {
@@ -93,7 +93,8 @@ export class DiscoveryService {
               databaseId,
             });
           } catch (error) {
-            this.logger.warn(`Failed to read agent config at ${configPath}:`, error.message);
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            this.logger.warn(`Failed to read agent config at ${configPath}:`, errorMsg);
 
             // Add discovered agent without config
             const isInDatabase = dbAgentMap.has(entry.name);
@@ -161,7 +162,8 @@ export class DiscoveryService {
               metadata: workflow.metadata || {},
             });
           } catch (error) {
-            this.logger.warn(`Failed to read workflow at ${workflowPath}:`, error.message);
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            this.logger.warn(`Failed to read workflow at ${workflowPath}:`, errorMsg);
           }
         }
       }
@@ -224,7 +226,8 @@ export class DiscoveryService {
           await this.importAgent(userId, agent.name);
           imported++;
         } catch (error) {
-          this.logger.error(`Failed to import agent ${agent.name}:`, error.message);
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          this.logger.error(`Failed to import agent ${agent.name}:`, errorMsg);
           skipped++;
         }
       } else {
