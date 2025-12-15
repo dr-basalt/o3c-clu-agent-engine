@@ -3,6 +3,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BullModule } from '@nestjs/bull';
 
+// Controllers
+import { AppController } from './app.controller';
+
 // Modules
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -18,6 +21,7 @@ import { OpenaiProxyModule } from './modules/openai-proxy/openai-proxy.module';
 import { HealthModule } from './modules/health/health.module';
 
 @Module({
+  controllers: [AppController],
   imports: [
     // Configuration
     ConfigModule.forRoot({

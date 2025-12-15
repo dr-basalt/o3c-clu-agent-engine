@@ -16,8 +16,19 @@ async function bootstrap() {
   const apiPrefix = configService.get('API_PREFIX', '/api/v1');
   const logger = new Logger('Bootstrap');
 
-  // Security
-  app.use(helmet());
+  // Security - Configure helmet to allow Swagger UI
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: [`'self'`],
+          styleSrc: [`'self'`, `'unsafe-inline'`],
+          scriptSrc: [`'self'`, `'unsafe-inline'`, `'unsafe-eval'`],
+          imgSrc: [`'self'`, 'data:', 'validator.swagger.io'],
+        },
+      },
+    })
+  );
   app.enableCors({
     origin: configService.get('FRONTEND_URL', 'http://localhost:3001'),
     credentials: true,
